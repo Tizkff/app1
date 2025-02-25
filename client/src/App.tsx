@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import ContractsPage from "@/pages/contracts";
 import ContractDetailPage from "@/pages/contracts/[id]";
+import ModellingPage from "@/pages/modelling";
 import Navbar from "@/components/navbar";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
         <Switch>
           <Route path="/" component={ContractsPage} />
           <Route path="/contracts/:id" component={ContractDetailPage} />
+          <Route path="/modelling" component={ModellingPage} />
           <Route component={NotFound} />
         </Switch>
       </main>
