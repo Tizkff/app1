@@ -37,6 +37,7 @@ import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import type { Contract } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 const regions = [
   "US",
@@ -68,6 +69,7 @@ const modellingFormSchema = z.object({
 type ModellingFormValues = z.infer<typeof modellingFormSchema>;
 
 export default function ModellingPage() {
+  const [, navigate] = useLocation();
   const form = useForm<ModellingFormValues>({
     resolver: zodResolver(modellingFormSchema),
     defaultValues: {
@@ -83,17 +85,35 @@ export default function ModellingPage() {
   });
 
   function onSubmit(data: ModellingFormValues) {
-    console.log(data);
-    // TODO: Handle form submission
+    // Generate a unique Run ID
+    const runId = `RUN-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+
+    // In a real application, we would send this to the backend
+    const modellingRun = {
+      id: runId,
+      startTime: new Date().toISOString(),
+      endTime: null,
+      initiatedBy: "John Smith", // This would come from auth context
+      parameters: data,
+      status: "running" as const
+    };
+
+    // Navigate to results page
+    navigate("/modelling/results");
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Modelling</h1>
-        <p className="text-muted-foreground">
-          Select contract criteria for modelling
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Accumulation Modelling</h1>
+          <p className="text-muted-foreground">
+            Select contract criteria for modelling
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/modelling/results")}>
+          View Results
+        </Button>
       </div>
 
       <Form {...form}>
