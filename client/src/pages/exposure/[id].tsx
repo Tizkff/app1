@@ -2,7 +2,7 @@ import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { Link } from "wouter";
 import type { ExposureFile, DetailedExposureData, TopCompany } from "@shared/schema";
 import {
@@ -31,11 +31,22 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ExposureOverviewPage() {
   const { id } = useParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterField, setFilterField] = useState<string>("all");
+  const [filterValue, setFilterValue] = useState("");
 
   const { data: file, isLoading } = useQuery<ExposureFile>({
     queryKey: [`/api/exposure-files/${id}`],
@@ -65,22 +76,120 @@ export default function ExposureOverviewPage() {
       maximumFractionDigits: 0 
     }).format(value);
 
+  const filteredDetailedData = useMemo(() => {
+    return detailedData.filter(item => {
+      const searchMatch = searchTerm.toLowerCase() === "" || 
+        Object.values(item).some(val => 
+          String(val).toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+      if (!searchMatch) return false;
+
+      if (filterField === "all" || !filterValue) return true;
+
+      const itemValue = String(item[filterField as keyof DetailedExposureData]);
+      return itemValue.toLowerCase().includes(filterValue.toLowerCase());
+    });
+  }, [detailedData, searchTerm, filterField, filterValue]);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/exposure">
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Exposure File {file.fileId}
-          </h1>
-          <p className="text-muted-foreground">
-            Detailed exposure file information and analytics
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/exposure">
+            <Button variant="outline" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Exposure File {file.fileId}
+            </h1>
+            <p className="text-muted-foreground">
+              Detailed exposure file information and analytics
+            </p>
+          </div>
         </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>See Detailed Exposure Data</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detailed Exposure Data</DialogTitle>
+              <DialogDescription>
+                Comprehensive view of all policies and their details
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-4 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search in all fields..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select
+                value={filterField}
+                onValueChange={setFilterField}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by field" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Fields</SelectItem>
+                  <SelectItem value="companyName">Company Name</SelectItem>
+                  <SelectItem value="policyNumber">Policy Number</SelectItem>
+                  <SelectItem value="currency">Currency</SelectItem>
+                  <SelectItem value="iso3Country">Country</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Filter value..."
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+                className="w-[200px]"
+                disabled={filterField === "all"}
+              />
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Company Name</TableHead>
+                  <TableHead>Policy Number</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Currency</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Inception Date</TableHead>
+                  <TableHead>Expiry Date</TableHead>
+                  <TableHead>Policy Limit</TableHead>
+                  <TableHead>Attachment</TableHead>
+                  <TableHead>Deductible</TableHead>
+                  <TableHead>GWP</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDetailedData.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.companyName}</TableCell>
+                    <TableCell>{item.policyNumber}</TableCell>
+                    <TableCell>{formatCurrency(item.revenue)}</TableCell>
+                    <TableCell>{item.currency}</TableCell>
+                    <TableCell>{item.iso3Country}</TableCell>
+                    <TableCell>{format(new Date(item.inceptionDate), "PP")}</TableCell>
+                    <TableCell>{format(new Date(item.expiryDate), "PP")}</TableCell>
+                    <TableCell>{formatCurrency(item.policyLimit)}</TableCell>
+                    <TableCell>{formatCurrency(item.policyAttachment)}</TableCell>
+                    <TableCell>{formatCurrency(item.policyDeductible)}</TableCell>
+                    <TableCell>{formatCurrency(item.policyGWP)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -213,54 +322,6 @@ export default function ExposureOverviewPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button className="w-full">See Detailed Exposure Data</Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detailed Exposure Data</DialogTitle>
-            <DialogDescription>
-              Comprehensive view of all policies and their details
-            </DialogDescription>
-          </DialogHeader>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Company Name</TableHead>
-                <TableHead>Policy Number</TableHead>
-                <TableHead>Revenue</TableHead>
-                <TableHead>Currency</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Inception Date</TableHead>
-                <TableHead>Expiry Date</TableHead>
-                <TableHead>Policy Limit</TableHead>
-                <TableHead>Attachment</TableHead>
-                <TableHead>Deductible</TableHead>
-                <TableHead>GWP</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {detailedData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{item.companyName}</TableCell>
-                  <TableCell>{item.policyNumber}</TableCell>
-                  <TableCell>{formatCurrency(item.revenue)}</TableCell>
-                  <TableCell>{item.currency}</TableCell>
-                  <TableCell>{item.iso3Country}</TableCell>
-                  <TableCell>{format(new Date(item.inceptionDate), "PP")}</TableCell>
-                  <TableCell>{format(new Date(item.expiryDate), "PP")}</TableCell>
-                  <TableCell>{formatCurrency(item.policyLimit)}</TableCell>
-                  <TableCell>{formatCurrency(item.policyAttachment)}</TableCell>
-                  <TableCell>{formatCurrency(item.policyDeductible)}</TableCell>
-                  <TableCell>{formatCurrency(item.policyGWP)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
