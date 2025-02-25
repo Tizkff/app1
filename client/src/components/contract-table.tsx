@@ -12,8 +12,13 @@ import type { Contract, ContractExposureLink, ExposureFile } from "@shared/schem
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { Search } from "lucide-react";
 
 export default function ContractTable() {
+  const [searchTerm, setSearchTerm] = useState("");
+
   const { data: contracts, isLoading: loadingContracts } = useQuery<Contract[]>({
     queryKey: ["/api/contracts"],
   });
@@ -61,60 +66,76 @@ export default function ContractTable() {
     );
   };
 
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Contract Name</TableHead>
-          <TableHead>Linked Exposure Files</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {contracts?.map((contract) => {
-          const links = contractLinks.data?.[contract.id] || [];
-          const linkedFiles = links
-            .map((link) =>
-              exposureFiles?.find((f) => f.id === link.exposureFileId)
-            )
-            .filter((f): f is ExposureFile => !!f);
+  const filteredContracts = contracts?.filter((contract) =>
+    contract.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-          return (
-            <TableRow key={contract.id}>
-              <TableCell>{contract.name}</TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-2">
-                  {linkedFiles.map((file) => (
-                    <Tooltip key={file.id}>
-                      <TooltipTrigger asChild>
-                        <Link href={`/exposure/${file.id}`}>
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto font-medium"
-                          >
-                            {file.fileId}
-                          </Button>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <ExposureFileTooltip file={file} />
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                  {linkedFiles.length === 0 && "None"}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Link href={`/contracts/${contract.id}`}>
-                  <Button variant="outline" size="sm">
-                    Manage Links
-                  </Button>
-                </Link>
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search contracts..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Contract Name</TableHead>
+            <TableHead>Linked Exposure Files</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredContracts?.map((contract) => {
+            const links = contractLinks.data?.[contract.id] || [];
+            const linkedFiles = links
+              .map((link) =>
+                exposureFiles?.find((f) => f.id === link.exposureFileId)
+              )
+              .filter((f): f is ExposureFile => !!f);
+
+            return (
+              <TableRow key={contract.id}>
+                <TableCell>{contract.name}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-2">
+                    {linkedFiles.map((file) => (
+                      <Tooltip key={file.id}>
+                        <TooltipTrigger asChild>
+                          <Link href={`/exposure/${file.id}`}>
+                            <Button
+                              variant="link"
+                              className="p-0 h-auto font-medium"
+                            >
+                              {file.fileId}
+                            </Button>
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <ExposureFileTooltip file={file} />
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                    {linkedFiles.length === 0 && "None"}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Link href={`/contracts/${contract.id}`}>
+                    <Button variant="outline" size="sm">
+                      Manage Links
+                    </Button>
+                  </Link>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
