@@ -2,6 +2,25 @@ import { pgTable, text, serial, integer, timestamp, decimal } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export interface DetailedExposureData {
+  companyName: string;
+  policyNumber: string;
+  revenue: number;
+  currency: string;
+  iso3Country: string;
+  inceptionDate: string;
+  expiryDate: string;
+  policyLimit: number;
+  policyAttachment: number;
+  policyDeductible: number;
+  policyGWP: number;
+}
+
+export interface TopCompany {
+  name: string;
+  sumInsured: number;
+}
+
 export const contracts = pgTable("contracts", {
   id: serial("id").primaryKey(),
   contractNumber: text("contract_number").notNull(),
@@ -21,6 +40,8 @@ export const exposureFiles = pgTable("exposure_files", {
   exposureByIndustry: text("exposure_by_industry").notNull(), // JSON string
   currencyDistribution: text("currency_distribution").notNull(), // JSON string
   matchedCompaniesPercent: decimal("matched_companies_percent").notNull(),
+  topCompanies: text("top_companies").notNull(), // JSON string of TopCompany[]
+  detailedData: text("detailed_data").notNull(), // JSON string of DetailedExposureData[]
 });
 
 export const contractExposureLinks = pgTable("contract_exposure_links", {
@@ -46,6 +67,8 @@ export const insertExposureFileSchema = createInsertSchema(exposureFiles).pick({
   exposureByIndustry: true,
   currencyDistribution: true,
   matchedCompaniesPercent: true,
+  topCompanies: true,
+  detailedData: true,
 });
 
 export const insertContractExposureLinkSchema = createInsertSchema(contractExposureLinks).pick({

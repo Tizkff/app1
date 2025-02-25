@@ -7,6 +7,25 @@ import {
   type InsertContractExposureLink,
 } from "@shared/schema";
 
+interface DetailedExposureData {
+  companyName: string;
+  policyNumber: string;
+  revenue: number;
+  currency: string;
+  iso3Country: string;
+  inceptionDate: string;
+  expiryDate: string;
+  policyLimit: number;
+  policyAttachment: number;
+  policyDeductible: number;
+  policyGWP: number;
+}
+
+interface TopCompany {
+  name: string;
+  sumInsured: number;
+}
+
 export interface IStorage {
   getContracts(): Promise<Contract[]>;
   getContract(id: number): Promise<Contract | undefined>;
@@ -34,6 +53,56 @@ export class MemStorage implements IStorage {
   }
 
   private initializeSampleData() {
+    const sampleDetailedData: DetailedExposureData[] = [
+      {
+        companyName: "Global Tech Industries",
+        policyNumber: "POL-2024-001",
+        revenue: 500000000,
+        currency: "USD",
+        iso3Country: "USA",
+        inceptionDate: "2024-01-01",
+        expiryDate: "2024-12-31",
+        policyLimit: 10000000,
+        policyAttachment: 1000000,
+        policyDeductible: 50000,
+        policyGWP: 250000
+      },
+      {
+        companyName: "European Manufacturing Corp",
+        policyNumber: "POL-2024-002",
+        revenue: 750000000,
+        currency: "EUR",
+        iso3Country: "DEU",
+        inceptionDate: "2024-02-15",
+        expiryDate: "2025-02-14",
+        policyLimit: 15000000,
+        policyAttachment: 2000000,
+        policyDeductible: 75000,
+        policyGWP: 375000
+      },
+      {
+        companyName: "Asian Tech Solutions",
+        policyNumber: "POL-2024-003",
+        revenue: 300000000,
+        currency: "JPY",
+        iso3Country: "JPN",
+        inceptionDate: "2024-03-01",
+        expiryDate: "2025-02-28",
+        policyLimit: 8000000,
+        policyAttachment: 1000000,
+        policyDeductible: 40000,
+        policyGWP: 200000
+      }
+    ];
+
+    const sampleTopCompanies: TopCompany[] = [
+      { name: "Global Tech Industries", sumInsured: 10000000 },
+      { name: "European Manufacturing Corp", sumInsured: 15000000 },
+      { name: "Asian Tech Solutions", sumInsured: 8000000 },
+      { name: "American Insurance Group", sumInsured: 12000000 },
+      { name: "British Financial Services", sumInsured: 9000000 }
+    ].sort((a, b) => b.sumInsured - a.sumInsured).slice(0, 20);
+
     // Add sample contracts
     const sampleContracts: InsertContract[] = [
       {
@@ -77,7 +146,9 @@ export class MemStorage implements IStorage {
           "EUR": 25,
           "GBP": 15
         }),
-        matchedCompaniesPercent: "85.50"
+        matchedCompaniesPercent: "85.50",
+        topCompanies: JSON.stringify(sampleTopCompanies),
+        detailedData: JSON.stringify(sampleDetailedData)
       },
       {
         fileId: "890283",
@@ -100,7 +171,9 @@ export class MemStorage implements IStorage {
           "EUR": 80,
           "USD": 20
         }),
-        matchedCompaniesPercent: "92.00"
+        matchedCompaniesPercent: "92.00",
+        topCompanies: JSON.stringify(sampleTopCompanies),
+        detailedData: JSON.stringify(sampleDetailedData)
       }
     ];
 
