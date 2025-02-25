@@ -131,7 +131,7 @@ export default function ExposureOverviewPage() {
             </p>
           </div>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog>
           <DialogTrigger asChild>
             <Button>See Detailed Exposure Data</Button>
           </DialogTrigger>
