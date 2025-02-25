@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -25,6 +24,8 @@ interface ModellingRun {
 }
 
 export default function ModellingResultsPage() {
+  const [, navigate] = useLocation();
+
   // Sample data - This would come from your API
   const sampleRuns: ModellingRun[] = [
     {
@@ -117,7 +118,11 @@ export default function ModellingResultsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/modelling/${run.id}`)}
+                    >
                       View Details
                     </Button>
                   </TableCell>

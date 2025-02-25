@@ -7,6 +7,7 @@ import ContractsPage from "@/pages/contracts";
 import ContractDetailPage from "@/pages/contracts/[id]";
 import ModellingPage from "@/pages/modelling";
 import ModellingResultsPage from "@/pages/modelling/results";
+import ModellingRunDetailsPage from "@/pages/modelling/[id]";
 import ExposureOverviewPage from "@/pages/exposure/[id]";
 import ExposureListPage from "@/pages/exposure/list";
 import TreatyReportPage from "@/pages/treaty-report";
@@ -23,6 +24,7 @@ function Router() {
           <Route path="/contracts/:id" component={ContractDetailPage} />
           <Route path="/modelling" component={ModellingPage} />
           <Route path="/modelling/results" component={ModellingResultsPage} />
+          <Route path="/modelling/:id" component={ModellingRunDetailsPage} />
           <Route path="/exposure" component={ExposureListPage} />
           <Route path="/exposure/:id" component={ExposureOverviewPage} />
           <Route path="/treaty-report" component={TreatyReportPage} />
