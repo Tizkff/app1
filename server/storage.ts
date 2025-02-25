@@ -36,9 +36,21 @@ export class MemStorage implements IStorage {
   private initializeSampleData() {
     // Add sample contracts
     const sampleContracts: InsertContract[] = [
-      { name: "Contract 1" },
-      { name: "Contract 2" },
-      { name: "Contract 3" },
+      {
+        contractNumber: "CNT-2024-001",
+        name: "Contract 1",
+        inceptionDate: new Date("2024-01-01"),
+      },
+      {
+        contractNumber: "CNT-2024-002",
+        name: "Contract 2",
+        inceptionDate: new Date("2024-02-15"),
+      },
+      {
+        contractNumber: "CNT-2024-003",
+        name: "Contract 3",
+        inceptionDate: new Date("2024-03-01"),
+      },
     ];
 
     // Add sample exposure files with more detailed information

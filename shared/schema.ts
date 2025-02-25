@@ -4,7 +4,9 @@ import { z } from "zod";
 
 export const contracts = pgTable("contracts", {
   id: serial("id").primaryKey(),
+  contractNumber: text("contract_number").notNull(),
   name: text("name").notNull(),
+  inceptionDate: timestamp("inception_date").notNull(),
 });
 
 export const exposureFiles = pgTable("exposure_files", {
@@ -27,7 +29,9 @@ export const contractExposureLinks = pgTable("contract_exposure_links", {
 });
 
 export const insertContractSchema = createInsertSchema(contracts).pick({
+  contractNumber: true,
   name: true,
+  inceptionDate: true,
 });
 
 export const insertExposureFileSchema = createInsertSchema(exposureFiles).pick({

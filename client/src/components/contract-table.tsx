@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Search } from "lucide-react";
+import { format } from "date-fns";
 
 export default function ContractTable() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,7 +68,8 @@ export default function ContractTable() {
   };
 
   const filteredContracts = contracts?.filter((contract) =>
-    contract.name.toLowerCase().includes(searchTerm.toLowerCase())
+    contract.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contract.contractNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -75,7 +77,7 @@ export default function ContractTable() {
       <div className="relative">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search contracts..."
+          placeholder="Search contracts by name or number..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-9"
@@ -85,7 +87,9 @@ export default function ContractTable() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Contract Number</TableHead>
             <TableHead>Contract Name</TableHead>
+            <TableHead>Inception Date</TableHead>
             <TableHead>Linked Exposure Files</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -101,7 +105,11 @@ export default function ContractTable() {
 
             return (
               <TableRow key={contract.id}>
+                <TableCell>{contract.contractNumber}</TableCell>
                 <TableCell>{contract.name}</TableCell>
+                <TableCell>
+                  {format(new Date(contract.inceptionDate), "PPP")}
+                </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
                     {linkedFiles.map((file) => (
