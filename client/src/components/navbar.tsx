@@ -4,6 +4,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function Navbar() {
   const [location, navigate] = useLocation();
 
+  const getCurrentTab = () => {
+    if (location === "/modelling") return "modelling";
+    if (location === "/exposure") return "exposure";
+    return "contracts";
+  };
+
   return (
     <nav className="border-b">
       <div className="container mx-auto px-4 py-4">
@@ -12,12 +18,22 @@ export default function Navbar() {
             <Link href="/">Exposure Link Dashboard</Link>
           </div>
 
-          <Tabs value={location === "/modelling" ? "modelling" : "contracts"} onValueChange={(value) => {
-            navigate(value === "modelling" ? "/modelling" : "/");
+          <Tabs value={getCurrentTab()} onValueChange={(value) => {
+            switch (value) {
+              case "modelling":
+                navigate("/modelling");
+                break;
+              case "exposure":
+                navigate("/exposure");
+                break;
+              default:
+                navigate("/");
+            }
           }}>
             <TabsList>
               <TabsTrigger value="contracts">Contract Links</TabsTrigger>
               <TabsTrigger value="modelling">Modelling</TabsTrigger>
+              <TabsTrigger value="exposure">Exposure Files</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
