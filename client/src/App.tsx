@@ -8,6 +8,7 @@ import ContractDetailPage from "@/pages/contracts/[id]";
 import ModellingPage from "@/pages/modelling";
 import ExposureOverviewPage from "@/pages/exposure/[id]";
 import ExposureListPage from "@/pages/exposure/list";
+import TreatyReportPage from "@/pages/treaty-report";
 import Navbar from "@/components/navbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/modelling" component={ModellingPage} />
           <Route path="/exposure" component={ExposureListPage} />
           <Route path="/exposure/:id" component={ExposureOverviewPage} />
+          <Route path="/treaty-report" component={TreatyReportPage} />
           <Route component={NotFound} />
         </Switch>
       </main>

@@ -7,6 +7,7 @@ export default function Navbar() {
   const getCurrentTab = () => {
     if (location === "/modelling") return "modelling";
     if (location === "/exposure") return "exposure";
+    if (location === "/treaty-report") return "treaty-report";
     return "contracts";
   };
 
@@ -26,6 +27,9 @@ export default function Navbar() {
               case "exposure":
                 navigate("/exposure");
                 break;
+              case "treaty-report":
+                navigate("/treaty-report");
+                break;
               default:
                 navigate("/");
             }
@@ -34,6 +38,7 @@ export default function Navbar() {
               <TabsTrigger value="contracts">Contract Links</TabsTrigger>
               <TabsTrigger value="modelling">Modelling</TabsTrigger>
               <TabsTrigger value="exposure">Exposure Files</TabsTrigger>
+              <TabsTrigger value="treaty-report">Single Treaty Report</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
