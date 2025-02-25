@@ -185,7 +185,6 @@ export default function TreatyReportPage() {
 
   const comparisonData = getComparisonData();
 
-
   return (
     <div className="space-y-6">
       <div>
@@ -195,30 +194,30 @@ export default function TreatyReportPage() {
         </p>
       </div>
 
-      {selectedContractId && (
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search contracts by name or number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={selectedContractId} onValueChange={setSelectedContractId}>
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Select a contract" />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredContracts?.map((contract) => (
-                <SelectItem key={contract.id} value={contract.id.toString()}>
-                  {contract.contractNumber} - {contract.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {comparisonContractId ? (
+      <div className="flex gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search contracts by name or number..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={selectedContractId} onValueChange={setSelectedContractId}>
+          <SelectTrigger className="w-[300px]">
+            <SelectValue placeholder="Select a contract to view report" />
+          </SelectTrigger>
+          <SelectContent>
+            {filteredContracts?.map((contract) => (
+              <SelectItem key={contract.id} value={contract.id.toString()}>
+                {contract.contractNumber} - {contract.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {selectedContractId && (
+          comparisonContractId ? (
             <Button 
               variant="outline" 
               onClick={() => setComparisonContractId("")}
@@ -257,9 +256,9 @@ export default function TreatyReportPage() {
                 </Select>
               </DialogContent>
             </Dialog>
-          )}
-        </div>
-      )}
+          )
+        )}
+      </div>
 
       {selectedContract && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
