@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import type { Contract, ExposureFile, ContractExposureLink } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -13,7 +14,15 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface YearlyRates {
   year: string;
@@ -22,15 +31,22 @@ interface YearlyRates {
   egpi: string;
 }
 
+interface OverrideValues {
+  value: string;
+  comment: string;
+}
+
 export default function ContractDetailPage() {
   const { id } = useParams();
   const { toast } = useToast();
-  const [grossUpFactor, setGrossUpFactor] = useState<string>("");
+  const [calculatedGrossUpFactor, setCalculatedGrossUpFactor] = useState<string>("1.2");
+  const [overrideValues, setOverrideValues] = useState<OverrideValues | null>(null);
+  const [tempOverride, setTempOverride] = useState<OverrideValues>({ value: "", comment: "" });
   const [yearlyRates, setYearlyRates] = useState<YearlyRates[]>([]);
-  const [isGrossUpFactorOverridden, setIsGrossUpFactorOverridden] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
-    const years = ["2022 and prior", "2023", "2024", "2025", "2026"];
+    const years = ["2026", "2025", "2024", "2023", "2022 and prior"];
     setYearlyRates(
       years.map((year) => ({
         year,
@@ -88,13 +104,6 @@ export default function ContractDetailPage() {
     },
   });
 
-  const handleGrossUpFactorChange = (value: string) => {
-    if (value === "" || /^-?\d*\.?\d*$/.test(value)) {
-      setGrossUpFactor(value);
-      setIsGrossUpFactorOverridden(true);
-    }
-  };
-
   const handleRateChange = (index: number, value: string) => {
     if (value === "" || /^-?\d*\.?\d*$/.test(value)) {
       const newRates = [...yearlyRates];
@@ -123,8 +132,6 @@ export default function ContractDetailPage() {
   };
 
   const calculateGrossUpFactor = (rates: YearlyRates[]) => {
-    if (isGrossUpFactorOverridden) return;
-
     const validRates = rates.filter(
       (rate) => rate.rate !== "" && rate.exposureGWP !== "" && rate.egpi !== ""
     );
@@ -137,8 +144,26 @@ export default function ContractDetailPage() {
         return acc + (rate * exposureGWP * egpi);
       }, 0);
 
-      setGrossUpFactor((sum / validRates.length).toFixed(2));
+      setCalculatedGrossUpFactor((sum / validRates.length).toFixed(2));
     }
+  };
+
+  const handleOverrideSubmit = () => {
+    if (!tempOverride.value || !tempOverride.comment) {
+      toast({
+        title: "Error",
+        description: "Both value and comment are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setOverrideValues(tempOverride);
+    setIsDialogOpen(false);
+    toast({
+      title: "Success",
+      description: "Gross up factor overridden successfully",
+    });
   };
 
   const ExposureFileTooltip = ({ file }: { file: ExposureFile }) => {
@@ -226,16 +251,71 @@ export default function ContractDetailPage() {
 
             <div className="h-px bg-border my-6" />
 
-            <div>
-              <Label htmlFor="grossUpFactor">Gross Up Factor (Auto-calculated)</Label>
-              <Input
-                id="grossUpFactor"
-                type="text"
-                placeholder="Enter gross up factor"
-                value={grossUpFactor}
-                onChange={(e) => handleGrossUpFactorChange(e.target.value)}
-                className="mt-1.5"
-              />
+            <div className="space-y-2">
+              <div className="flex items-center gap-4">
+                <div>
+                  <Label>Calculated Gross Up Factor</Label>
+                  <div className="text-lg font-medium mt-1.5">{calculatedGrossUpFactor}</div>
+                </div>
+
+                {overrideValues && (
+                  <div>
+                    <Label>Override Value</Label>
+                    <div className="text-lg font-medium mt-1.5 text-primary">
+                      {overrideValues.value}
+                      <span className="ml-2 text-sm text-muted-foreground">
+                        ({overrideValues.comment})
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="ml-auto">
+                      Override Value
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Override Gross Up Factor</DialogTitle>
+                      <DialogDescription>
+                        Enter a new value and provide a comment explaining the change.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label>New Value</Label>
+                        <Input
+                          type="text"
+                          value={tempOverride.value}
+                          onChange={(e) => {
+                            if (e.target.value === "" || /^\d*\.?\d*$/.test(e.target.value)) {
+                              setTempOverride({ ...tempOverride, value: e.target.value });
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Comment</Label>
+                        <Textarea
+                          value={tempOverride.comment}
+                          onChange={(e) => setTempOverride({ ...tempOverride, comment: e.target.value })}
+                          placeholder="Explain why you're overriding the calculated value..."
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleOverrideSubmit}>
+                        Apply Override
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
             <div className="space-y-4">
