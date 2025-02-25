@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -23,9 +24,18 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function TreatyReportPage() {
   const [selectedContractId, setSelectedContractId] = useState<string>("");
+  const [comparisonContractId, setComparisonContractId] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: contracts } = useQuery<Contract[]>({
@@ -37,14 +47,24 @@ export default function TreatyReportPage() {
     enabled: !!selectedContractId,
   });
 
+  const { data: comparisonContract } = useQuery<Contract>({
+    queryKey: [`/api/contracts/${comparisonContractId}`],
+    enabled: !!comparisonContractId,
+  });
+
   const { data: contractLinks } = useQuery<any[]>({
     queryKey: [`/api/contracts/${selectedContractId}/links`],
     enabled: !!selectedContractId,
   });
 
+  const { data: comparisonLinks } = useQuery<any[]>({
+    queryKey: [`/api/contracts/${comparisonContractId}/links`],
+    enabled: !!comparisonContractId,
+  });
+
   const { data: exposureFiles } = useQuery<ExposureFile[]>({
     queryKey: ["/api/exposure-files"],
-    enabled: !!contractLinks,
+    enabled: !!contractLinks || !!comparisonLinks,
   });
 
   const filteredContracts = contracts?.filter(
@@ -63,9 +83,38 @@ export default function TreatyReportPage() {
     { month: "Jun", baseline: 520, optimistic: 600, pessimistic: 440 },
   ];
 
+  // Sample comparison modeling data
+  const comparisonModelingData = [
+    { month: "Jan", baseline: 380, optimistic: 420, pessimistic: 320 },
+    { month: "Feb", baseline: 400, optimistic: 450, pessimistic: 340 },
+    { month: "Mar", baseline: 430, optimistic: 490, pessimistic: 360 },
+    { month: "Apr", baseline: 450, optimistic: 520, pessimistic: 370 },
+    { month: "May", baseline: 480, optimistic: 550, pessimistic: 400 },
+    { month: "Jun", baseline: 500, optimistic: 570, pessimistic: 420 },
+  ];
+
   const linkedExposureFiles = exposureFiles?.filter(
     (file) => contractLinks?.some((link) => link.exposureFileId === file.id)
   );
+
+  const comparisonExposureFiles = exposureFiles?.filter(
+    (file) => comparisonLinks?.some((link) => link.exposureFileId === file.id)
+  );
+
+  const calculateTotalMetrics = (files: ExposureFile[] | undefined) => {
+    if (!files) return { totalGWP: 0, totalTSI: 0, totalCount: 0 };
+    return files.reduce(
+      (acc, file) => ({
+        totalGWP: acc.totalGWP + Number(file.totalGWP),
+        totalTSI: acc.totalTSI + Number(file.tsiAmount),
+        totalCount: acc.totalCount + file.count,
+      }),
+      { totalGWP: 0, totalTSI: 0, totalCount: 0 }
+    );
+  };
+
+  const selectedMetrics = calculateTotalMetrics(linkedExposureFiles);
+  const comparisonMetrics = calculateTotalMetrics(comparisonExposureFiles);
 
   return (
     <div className="space-y-6">
@@ -98,6 +147,38 @@ export default function TreatyReportPage() {
             ))}
           </SelectContent>
         </Select>
+        {selectedContractId && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Compare with Another Treaty</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Select Treaty for Comparison</DialogTitle>
+                <DialogDescription>
+                  Choose another treaty to compare metrics and modeling results
+                </DialogDescription>
+              </DialogHeader>
+              <Select
+                value={comparisonContractId}
+                onValueChange={setComparisonContractId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a contract for comparison" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredContracts
+                    ?.filter((contract) => contract.id.toString() !== selectedContractId)
+                    .map((contract) => (
+                      <SelectItem key={contract.id} value={contract.id.toString()}>
+                        {contract.contractNumber} - {contract.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {selectedContract && (
@@ -107,20 +188,38 @@ export default function TreatyReportPage() {
               <CardTitle>Contract Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="space-y-2">
-                <div>
-                  <dt className="font-medium">Contract Number</dt>
-                  <dd>{selectedContract.contractNumber}</dd>
-                </div>
-                <div>
-                  <dt className="font-medium">Name</dt>
-                  <dd>{selectedContract.name}</dd>
-                </div>
-                <div>
-                  <dt className="font-medium">Inception Date</dt>
-                  <dd>{format(new Date(selectedContract.inceptionDate), "PPP")}</dd>
-                </div>
-              </dl>
+              <div className="grid grid-cols-2 gap-6">
+                <dl className="space-y-2">
+                  <div>
+                    <dt className="font-medium">Contract Number</dt>
+                    <dd>{selectedContract.contractNumber}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium">Name</dt>
+                    <dd>{selectedContract.name}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium">Inception Date</dt>
+                    <dd>{format(new Date(selectedContract.inceptionDate), "PPP")}</dd>
+                  </div>
+                </dl>
+                {comparisonContract && (
+                  <dl className="space-y-2">
+                    <div>
+                      <dt className="font-medium">Comparison Contract</dt>
+                      <dd>{comparisonContract.contractNumber}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-medium">Name</dt>
+                      <dd>{comparisonContract.name}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-medium">Inception Date</dt>
+                      <dd>{format(new Date(comparisonContract.inceptionDate), "PPP")}</dd>
+                    </div>
+                  </dl>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -129,22 +228,65 @@ export default function TreatyReportPage() {
               <CardTitle>Exposure Metrics</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="space-y-2">
-                {linkedExposureFiles?.map((file) => (
-                  <div key={file.id} className="border-b pb-2 last:border-0">
-                    <dt className="font-medium">
-                      <Link href={`/exposure/${file.id}`} className="text-primary hover:underline">
-                        File {file.fileId}
-                      </Link>
-                    </dt>
-                    <dd className="space-y-1 mt-1">
-                      <div>Total GWP: {file.totalGWP}</div>
-                      <div>TSI Amount: {file.tsiAmount}</div>
-                      <div>Policies Count: {file.count}</div>
-                    </dd>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold mb-2">Selected Treaty</h3>
+                  <dl className="space-y-2">
+                    {linkedExposureFiles?.map((file) => (
+                      <div key={file.id} className="border-b pb-2 last:border-0">
+                        <dt className="font-medium">
+                          <Link href={`/exposure/${file.id}`} className="text-primary hover:underline">
+                            File {file.fileId}
+                          </Link>
+                        </dt>
+                        <dd className="space-y-1 mt-1">
+                          <div>Total GWP: {file.totalGWP}</div>
+                          <div>TSI Amount: {file.tsiAmount}</div>
+                          <div>Policies Count: {file.count}</div>
+                        </dd>
+                      </div>
+                    ))}
+                    <div className="mt-4 pt-2 border-t">
+                      <dt className="font-medium">Combined Metrics</dt>
+                      <dd className="space-y-1 mt-1">
+                        <div>Total GWP: {selectedMetrics.totalGWP.toFixed(2)}</div>
+                        <div>Total TSI: {selectedMetrics.totalTSI.toFixed(2)}</div>
+                        <div>Total Policies: {selectedMetrics.totalCount}</div>
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                {comparisonContract && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Comparison Treaty</h3>
+                    <dl className="space-y-2">
+                      {comparisonExposureFiles?.map((file) => (
+                        <div key={file.id} className="border-b pb-2 last:border-0">
+                          <dt className="font-medium">
+                            <Link href={`/exposure/${file.id}`} className="text-primary hover:underline">
+                              File {file.fileId}
+                            </Link>
+                          </dt>
+                          <dd className="space-y-1 mt-1">
+                            <div>Total GWP: {file.totalGWP}</div>
+                            <div>TSI Amount: {file.tsiAmount}</div>
+                            <div>Policies Count: {file.count}</div>
+                          </dd>
+                        </div>
+                      ))}
+                      <div className="mt-4 pt-2 border-t">
+                        <dt className="font-medium">Combined Metrics</dt>
+                        <dd className="space-y-1 mt-1">
+                          <div>Total GWP: {comparisonMetrics.totalGWP.toFixed(2)}</div>
+                          <div>Total TSI: {comparisonMetrics.totalTSI.toFixed(2)}</div>
+                          <div>Total Policies: {comparisonMetrics.totalCount}</div>
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
-                ))}
-              </dl>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -155,30 +297,72 @@ export default function TreatyReportPage() {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={modelingData}>
+                  <LineChart>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
+                    <XAxis
+                      dataKey="month"
+                      allowDuplicatedCategory={false}
+                    />
                     <YAxis />
                     <Tooltip />
                     <Legend />
+                    {/* Selected Treaty Lines */}
                     <Line
+                      data={modelingData}
                       type="monotone"
                       dataKey="baseline"
                       stroke="#8884d8"
-                      name="Baseline Scenario"
+                      name="Selected - Baseline"
+                      strokeWidth={2}
                     />
                     <Line
+                      data={modelingData}
                       type="monotone"
                       dataKey="optimistic"
                       stroke="#82ca9d"
-                      name="Optimistic Scenario"
+                      name="Selected - Optimistic"
+                      strokeWidth={2}
                     />
                     <Line
+                      data={modelingData}
                       type="monotone"
                       dataKey="pessimistic"
                       stroke="#ff7300"
-                      name="Pessimistic Scenario"
+                      name="Selected - Pessimistic"
+                      strokeWidth={2}
                     />
+                    {/* Comparison Treaty Lines (dashed) */}
+                    {comparisonContract && (
+                      <>
+                        <Line
+                          data={comparisonModelingData}
+                          type="monotone"
+                          dataKey="baseline"
+                          stroke="#8884d8"
+                          name="Comparison - Baseline"
+                          strokeDasharray="5 5"
+                          strokeWidth={2}
+                        />
+                        <Line
+                          data={comparisonModelingData}
+                          type="monotone"
+                          dataKey="optimistic"
+                          stroke="#82ca9d"
+                          name="Comparison - Optimistic"
+                          strokeDasharray="5 5"
+                          strokeWidth={2}
+                        />
+                        <Line
+                          data={comparisonModelingData}
+                          type="monotone"
+                          dataKey="pessimistic"
+                          stroke="#ff7300"
+                          name="Comparison - Pessimistic"
+                          strokeDasharray="5 5"
+                          strokeWidth={2}
+                        />
+                      </>
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
