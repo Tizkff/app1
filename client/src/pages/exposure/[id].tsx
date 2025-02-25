@@ -43,6 +43,8 @@ import {
 
 export default function ExposureOverviewPage() {
   const { id } = useParams();
+
+  // State declarations at the top
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterField, setFilterField] = useState<string>("all");
@@ -52,6 +54,7 @@ export default function ExposureOverviewPage() {
     queryKey: [`/api/exposure-files/${id}`],
   });
 
+  // Early return for loading and error states
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -60,22 +63,30 @@ export default function ExposureOverviewPage() {
     return <div>Exposure file not found</div>;
   }
 
-  const countryData = JSON.parse(file.exposureByCountry);
-  const industryData = JSON.parse(file.exposureByIndustry);
-  const currencyData = JSON.parse(file.currencyDistribution);
-  const topCompanies = JSON.parse(file.topCompanies) as TopCompany[];
-  const detailedData = JSON.parse(file.detailedData) as DetailedExposureData[];
+  // Memoize parsed data to avoid re-parsing on every render
+  const parsedData = useMemo(() => {
+    try {
+      return {
+        countryData: JSON.parse(file.exposureByCountry),
+        industryData: JSON.parse(file.exposureByIndustry),
+        currencyData: JSON.parse(file.currencyDistribution),
+        topCompanies: JSON.parse(file.topCompanies) as TopCompany[],
+        detailedData: JSON.parse(file.detailedData) as DetailedExposureData[],
+      };
+    } catch (error) {
+      console.error("Error parsing JSON data:", error);
+      return null;
+    }
+  }, [file]);
 
-  const formatChartData = (data: Record<string, number>) =>
-    Object.entries(data).map(([name, value]) => ({ name, value }));
+  // If JSON parsing failed, show error
+  if (!parsedData) {
+    return <div>Error parsing exposure file data</div>;
+  }
 
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD',
-      maximumFractionDigits: 0 
-    }).format(value);
+  const { countryData, industryData, currencyData, topCompanies, detailedData } = parsedData;
 
+  // Memoize filtered data
   const filteredDetailedData = useMemo(() => {
     return detailedData.filter(item => {
       const searchMatch = searchTerm.toLowerCase() === "" || 
@@ -91,6 +102,16 @@ export default function ExposureOverviewPage() {
       return itemValue.toLowerCase().includes(filterValue.toLowerCase());
     });
   }, [detailedData, searchTerm, filterField, filterValue]);
+
+  const formatChartData = (data: Record<string, number>) =>
+    Object.entries(data).map(([name, value]) => ({ name, value }));
+
+  const formatCurrency = (value: number) => 
+    new Intl.NumberFormat('en-US', { 
+      style: 'currency', 
+      currency: 'USD',
+      maximumFractionDigits: 0 
+    }).format(value);
 
   return (
     <div className="space-y-6">
