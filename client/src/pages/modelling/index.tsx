@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,6 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -70,6 +78,9 @@ type ModellingFormValues = z.infer<typeof modellingFormSchema>;
 
 export default function ModellingPage() {
   const [, navigate] = useLocation();
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [currentRunId, setCurrentRunId] = useState<string>("");
+
   const form = useForm<ModellingFormValues>({
     resolver: zodResolver(modellingFormSchema),
     defaultValues: {
@@ -87,6 +98,10 @@ export default function ModellingPage() {
   function onSubmit(data: ModellingFormValues) {
     // Generate a unique Run ID
     const runId = `RUN-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+    setCurrentRunId(runId);
+
+    // Show confirmation dialog
+    setShowConfirmation(true);
 
     // In a real application, we would send this to the backend
     const modellingRun = {
@@ -97,9 +112,6 @@ export default function ModellingPage() {
       parameters: data,
       status: "running" as const
     };
-
-    // Navigate to results page
-    navigate("/modelling/results");
   }
 
   return (
@@ -421,6 +433,32 @@ export default function ModellingPage() {
           </Button>
         </form>
       </Form>
+
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modelling Run Initiated</DialogTitle>
+            <DialogDescription className="space-y-4">
+              <p>Your modelling run has been successfully initiated.</p>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="font-semibold">Run ID:</p>
+                <p className="text-2xl font-bold text-primary">{currentRunId}</p>
+              </div>
+              <div className="flex justify-end gap-4 mt-4">
+                <Button variant="outline" onClick={() => setShowConfirmation(false)}>
+                  Close
+                </Button>
+                <Button onClick={() => {
+                  setShowConfirmation(false);
+                  navigate("/modelling/results");
+                }}>
+                  View Results
+                </Button>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
