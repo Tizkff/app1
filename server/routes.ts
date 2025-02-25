@@ -22,6 +22,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(files);
   });
 
+  app.get("/api/exposure-files/:id", async (req, res) => {
+    const file = await storage.getExposureFile(Number(req.params.id));
+    if (!file) {
+      return res.status(404).json({ message: "Exposure file not found" });
+    }
+    res.json(file);
+  });
+
   app.get("/api/contracts/:id/links", async (req, res) => {
     const links = await storage.getContractLinks(Number(req.params.id));
     res.json(links);

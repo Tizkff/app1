@@ -12,9 +12,11 @@ import { queryClient } from "@/lib/queryClient";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 interface YearlyRates {
-  year: number;
+  year: string;
   rate: string;
   exposureGWP: string;
   egpi: string;
@@ -27,10 +29,8 @@ export default function ContractDetailPage() {
   const [yearlyRates, setYearlyRates] = useState<YearlyRates[]>([]);
   const [isGrossUpFactorOverridden, setIsGrossUpFactorOverridden] = useState(false);
 
-  // Initialize yearly rates
   useEffect(() => {
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 7 }, (_, i) => 2020 + i);
+    const years = ["2022 and prior", "2023", "2024", "2025", "2026"];
     setYearlyRates(
       years.map((year) => ({
         year,
@@ -125,8 +125,6 @@ export default function ContractDetailPage() {
   const calculateGrossUpFactor = (rates: YearlyRates[]) => {
     if (isGrossUpFactorOverridden) return;
 
-    // Simple average calculation for demonstration
-    // You may want to implement a more sophisticated calculation based on your business logic
     const validRates = rates.filter(
       (rate) => rate.rate !== "" && rate.exposureGWP !== "" && rate.egpi !== ""
     );
@@ -141,6 +139,19 @@ export default function ContractDetailPage() {
 
       setGrossUpFactor((sum / validRates.length).toFixed(2));
     }
+  };
+
+  const ExposureFileTooltip = ({ file }: { file: ExposureFile }) => {
+    return (
+      <div className="p-3 max-w-xs">
+        <div className="space-y-2 text-sm">
+          <p>Imported by: {file.importedBy}</p>
+          <p>Count: {file.count}</p>
+          <p>Total GWP: {file.totalGWP}</p>
+          <p>TSI Amount: {file.tsiAmount}</p>
+        </div>
+      </div>
+    );
   };
 
   if (loadingContract || loadingFiles || loadingLinks) {
@@ -247,12 +258,21 @@ export default function ContractDetailPage() {
                         })
                       }
                     />
-                    <label
-                      htmlFor={`file-${file.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Exposure File {file.fileId}
-                    </label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link href={`/exposure/${file.id}`}>
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto font-medium"
+                          >
+                            Exposure File {file.fileId}
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <ExposureFileTooltip file={file} />
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 );
               })}

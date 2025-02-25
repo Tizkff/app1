@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,6 +10,14 @@ export const contracts = pgTable("contracts", {
 export const exposureFiles = pgTable("exposure_files", {
   id: serial("id").primaryKey(),
   fileId: text("file_id").notNull(),
+  importedBy: text("imported_by").notNull(),
+  importedAt: timestamp("imported_at").notNull(),
+  count: integer("count").notNull(),
+  totalGWP: decimal("total_gwp").notNull(),
+  tsiAmount: decimal("tsi_amount").notNull(),
+  exposureByCountry: text("exposure_by_country").notNull(), // JSON string
+  exposureByIndustry: text("exposure_by_industry").notNull(), // JSON string
+  currencyDistribution: text("currency_distribution").notNull(), // JSON string
 });
 
 export const contractExposureLinks = pgTable("contract_exposure_links", {
@@ -24,6 +32,14 @@ export const insertContractSchema = createInsertSchema(contracts).pick({
 
 export const insertExposureFileSchema = createInsertSchema(exposureFiles).pick({
   fileId: true,
+  importedBy: true,
+  importedAt: true,
+  count: true,
+  totalGWP: true,
+  tsiAmount: true,
+  exposureByCountry: true,
+  exposureByIndustry: true,
+  currencyDistribution: true,
 });
 
 export const insertContractExposureLinkSchema = createInsertSchema(contractExposureLinks).pick({

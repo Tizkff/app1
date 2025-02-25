@@ -40,11 +40,53 @@ export class MemStorage implements IStorage {
       { name: "Contract 3" },
     ];
 
-    // Add sample exposure files
+    // Add sample exposure files with more detailed information
     const sampleExposureFiles: InsertExposureFile[] = [
-      { fileId: "803837" },
-      { fileId: "890283" },
-      { fileId: "756432" },
+      {
+        fileId: "803837",
+        importedBy: "John Smith",
+        importedAt: new Date("2024-02-20T10:30:00Z"),
+        count: 150,
+        totalGWP: "1500000.00",
+        tsiAmount: "15000000.00",
+        exposureByCountry: JSON.stringify({
+          "US": 40,
+          "UK": 30,
+          "Germany": 30
+        }),
+        exposureByIndustry: JSON.stringify({
+          "Manufacturing": 45,
+          "Technology": 35,
+          "Services": 20
+        }),
+        currencyDistribution: JSON.stringify({
+          "USD": 60,
+          "EUR": 25,
+          "GBP": 15
+        })
+      },
+      {
+        fileId: "890283",
+        importedBy: "Emma Davis",
+        importedAt: new Date("2024-02-22T14:15:00Z"),
+        count: 200,
+        totalGWP: "2000000.00",
+        tsiAmount: "20000000.00",
+        exposureByCountry: JSON.stringify({
+          "France": 35,
+          "Spain": 35,
+          "Italy": 30
+        }),
+        exposureByIndustry: JSON.stringify({
+          "Retail": 40,
+          "Healthcare": 35,
+          "Finance": 25
+        }),
+        currencyDistribution: JSON.stringify({
+          "EUR": 80,
+          "USD": 20
+        })
+      }
     ];
 
     sampleContracts.forEach((contract) => {
