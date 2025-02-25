@@ -36,9 +36,9 @@ export default function Navbar() {
           }}>
             <TabsList>
               <TabsTrigger value="contracts">Contract Links</TabsTrigger>
-              <TabsTrigger value="modelling">Modelling</TabsTrigger>
               <TabsTrigger value="exposure">Exposure Files</TabsTrigger>
               <TabsTrigger value="treaty-report">Single Treaty Report</TabsTrigger>
+              <TabsTrigger value="modelling">Accumulation Modelling</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
