@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, TrendingDown, TrendingUp } from "lucide-react";
 import type { Contract, ExposureFile } from "@shared/schema";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -23,6 +23,11 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import {
   Dialog,
@@ -32,6 +37,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function TreatyReportPage() {
   const [selectedContractId, setSelectedContractId] = useState<string>("");
@@ -73,7 +80,6 @@ export default function TreatyReportPage() {
       contract.contractNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Sample modeling data with more realistic scenarios and monthly progression
   const modelingData = [
     { month: "Jan", baseline: 400, optimistic: 450, pessimistic: 350, actual: 420 },
     { month: "Feb", baseline: 420, optimistic: 480, pessimistic: 360, actual: 445 },
@@ -89,7 +95,6 @@ export default function TreatyReportPage() {
     { month: "Dec", baseline: 640, optimistic: 720, pessimistic: 560, actual: null }
   ];
 
-  // Sample comparison modeling data with different performance characteristics
   const comparisonModelingData = [
     { month: "Jan", baseline: 380, optimistic: 420, pessimistic: 320, actual: 400 },
     { month: "Feb", baseline: 400, optimistic: 450, pessimistic: 340, actual: 425 },
@@ -127,6 +132,59 @@ export default function TreatyReportPage() {
 
   const selectedMetrics = calculateTotalMetrics(linkedExposureFiles);
   const comparisonMetrics = calculateTotalMetrics(comparisonExposureFiles);
+
+  const calculatePercentageDifference = (value1: number, value2: number) => {
+    if (value2 === 0) return 0;
+    const diff = ((value1 - value2) / value2) * 100;
+    return diff.toFixed(1);
+  };
+
+  const formatChartData = (selectedData: Record<string, number>, comparisonData: Record<string, number>) => {
+    const allKeys = new Set([...Object.keys(selectedData), ...Object.keys(comparisonData)]);
+    return Array.from(allKeys).map(key => ({
+      name: key,
+      selected: selectedData[key] || 0,
+      comparison: comparisonData[key] || 0,
+      difference: calculatePercentageDifference(
+        selectedData[key] || 0,
+        comparisonData[key] || 0
+      )
+    }));
+  };
+
+  const renderTrendIndicator = (diff: number) => {
+    if (diff > 0) {
+      return <TrendingUp className="h-4 w-4 text-green-500 inline" />;
+    } else if (diff < 0) {
+      return <TrendingDown className="h-4 w-4 text-red-500 inline" />;
+    }
+    return null;
+  };
+
+  const getComparisonData = () => {
+    if (!linkedExposureFiles?.length || !comparisonExposureFiles?.length) return null;
+
+    const selected = linkedExposureFiles[0];
+    const comparison = comparisonExposureFiles[0];
+
+    return {
+      country: formatChartData(
+        JSON.parse(selected.exposureByCountry),
+        JSON.parse(comparison.exposureByCountry)
+      ),
+      industry: formatChartData(
+        JSON.parse(selected.exposureByIndustry),
+        JSON.parse(comparison.exposureByIndustry)
+      ),
+      currency: formatChartData(
+        JSON.parse(selected.currencyDistribution),
+        JSON.parse(comparison.currencyDistribution)
+      )
+    };
+  };
+
+  const comparisonData = getComparisonData();
+
 
   return (
     <div className="space-y-6">
@@ -237,7 +295,7 @@ export default function TreatyReportPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Exposure Metrics</CardTitle>
+              <CardTitle>Exposure Metrics Comparison</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-6">
@@ -271,28 +329,36 @@ export default function TreatyReportPage() {
 
                 {comparisonContract && (
                   <div>
-                    <h3 className="font-semibold mb-2">Comparison Treaty</h3>
-                    <dl className="space-y-2">
-                      {comparisonExposureFiles?.map((file) => (
-                        <div key={file.id} className="border-b pb-2 last:border-0">
-                          <dt className="font-medium">
-                            <Link href={`/exposure/${file.id}`} className="text-primary hover:underline">
-                              File {file.fileId}
-                            </Link>
-                          </dt>
-                          <dd className="space-y-1 mt-1">
-                            <div>Total GWP: {file.totalGWP}</div>
-                            <div>TSI Amount: {file.tsiAmount}</div>
-                            <div>Policies Count: {file.count}</div>
-                          </dd>
-                        </div>
-                      ))}
-                      <div className="mt-4 pt-2 border-t">
-                        <dt className="font-medium">Combined Metrics</dt>
-                        <dd className="space-y-1 mt-1">
-                          <div>Total GWP: {comparisonMetrics.totalGWP.toFixed(2)}</div>
-                          <div>Total TSI: {comparisonMetrics.totalTSI.toFixed(2)}</div>
-                          <div>Total Policies: {comparisonMetrics.totalCount}</div>
+                    <h3 className="font-semibold mb-2">Metrics Comparison</h3>
+                    <dl className="space-y-4">
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <dt className="font-medium">Total GWP Difference</dt>
+                        <dd className="text-2xl font-bold flex items-center gap-2">
+                          {calculatePercentageDifference(
+                            selectedMetrics.totalGWP,
+                            comparisonMetrics.totalGWP
+                          )}%
+                          {renderTrendIndicator(selectedMetrics.totalGWP - comparisonMetrics.totalGWP)}
+                        </dd>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <dt className="font-medium">Total TSI Difference</dt>
+                        <dd className="text-2xl font-bold flex items-center gap-2">
+                          {calculatePercentageDifference(
+                            selectedMetrics.totalTSI,
+                            comparisonMetrics.totalTSI
+                          )}%
+                          {renderTrendIndicator(selectedMetrics.totalTSI - comparisonMetrics.totalTSI)}
+                        </dd>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <dt className="font-medium">Policy Count Difference</dt>
+                        <dd className="text-2xl font-bold flex items-center gap-2">
+                          {calculatePercentageDifference(
+                            selectedMetrics.totalCount,
+                            comparisonMetrics.totalCount
+                          )}%
+                          {renderTrendIndicator(selectedMetrics.totalCount - comparisonMetrics.totalCount)}
                         </dd>
                       </div>
                     </dl>
@@ -301,6 +367,73 @@ export default function TreatyReportPage() {
               </div>
             </CardContent>
           </Card>
+
+          {comparisonData && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Country Distribution Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={comparisonData.country}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="selected" name="Selected Treaty" fill="#0088FE" />
+                        <Bar dataKey="comparison" name="Comparison Treaty" fill="#00C49F" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Industry Distribution Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={comparisonData.industry}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="selected" name="Selected Treaty" fill="#0088FE" />
+                        <Bar dataKey="comparison" name="Comparison Treaty" fill="#00C49F" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Currency Distribution Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={comparisonData.currency}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="selected" name="Selected Treaty" fill="#0088FE" />
+                        <Bar dataKey="comparison" name="Comparison Treaty" fill="#00C49F" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
 
           <Card className="md:col-span-2">
             <CardHeader>
@@ -318,7 +451,6 @@ export default function TreatyReportPage() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    {/* Selected Treaty Lines */}
                     <Line
                       data={modelingData}
                       type="monotone"
@@ -352,7 +484,6 @@ export default function TreatyReportPage() {
                       strokeWidth={2}
                       dot={{ r: 4 }}
                     />
-                    {/* Comparison Treaty Lines (dashed) */}
                     {comparisonContract && (
                       <>
                         <Line
