@@ -76,7 +76,8 @@ export class MemStorage implements IStorage {
           "USD": 60,
           "EUR": 25,
           "GBP": 15
-        })
+        }),
+        matchedCompaniesPercent: "85.50"
       },
       {
         fileId: "890283",
@@ -98,7 +99,8 @@ export class MemStorage implements IStorage {
         currencyDistribution: JSON.stringify({
           "EUR": 80,
           "USD": 20
-        })
+        }),
+        matchedCompaniesPercent: "92.00"
       }
     ];
 

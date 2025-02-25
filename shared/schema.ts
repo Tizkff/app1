@@ -20,6 +20,7 @@ export const exposureFiles = pgTable("exposure_files", {
   exposureByCountry: text("exposure_by_country").notNull(), // JSON string
   exposureByIndustry: text("exposure_by_industry").notNull(), // JSON string
   currencyDistribution: text("currency_distribution").notNull(), // JSON string
+  matchedCompaniesPercent: decimal("matched_companies_percent").notNull(),
 });
 
 export const contractExposureLinks = pgTable("contract_exposure_links", {
@@ -44,6 +45,7 @@ export const insertExposureFileSchema = createInsertSchema(exposureFiles).pick({
   exposureByCountry: true,
   exposureByIndustry: true,
   currencyDistribution: true,
+  matchedCompaniesPercent: true,
 });
 
 export const insertContractExposureLinkSchema = createInsertSchema(contractExposureLinks).pick({

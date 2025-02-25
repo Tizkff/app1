@@ -83,6 +83,22 @@ export default function ExposureOverviewPage() {
                 <dt className="font-medium">TSI Amount</dt>
                 <dd>{file.tsiAmount}</dd>
               </div>
+              <div>
+                <dt className="font-medium">Companies Matched to Database</dt>
+                <dd className="flex items-center">
+                  <div className="text-lg font-semibold mr-2">
+                    {Number(file.matchedCompaniesPercent).toFixed(1)}%
+                  </div>
+                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary" 
+                      style={{ 
+                        width: `${file.matchedCompaniesPercent}%`,
+                      }}
+                    />
+                  </div>
+                </dd>
+              </div>
             </dl>
           </CardContent>
         </Card>
