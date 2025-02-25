@@ -24,11 +24,32 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { CalendarIcon, Check } from "lucide-react";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import type { Contract } from "@shared/schema";
+import { cn } from "@/lib/utils";
+
+const regions = [
+  "US",
+  "EMEA",
+  "ASIA",
+  "OCEANIA",
+  "South America",
+  "UK",
+] as const;
 
 const modellingFormSchema = z.object({
-  country: z.string().min(1, "Country is required"),
+  regions: z.array(z.string()).min(1, "Select at least one region"),
+  selectedContracts: z.array(z.number()).optional(),
   contractType: z.enum(["Large", "SME", "Micro"], {
     required_error: "Please select a contract type",
   }),
@@ -50,9 +71,15 @@ export default function ModellingPage() {
   const form = useForm<ModellingFormValues>({
     resolver: zodResolver(modellingFormSchema),
     defaultValues: {
+      regions: regions as unknown as string[],
+      selectedContracts: [],
       contractType: "Large",
       modelType: "Landing",
     },
+  });
+
+  const { data: contracts } = useQuery<Contract[]>({
+    queryKey: ["/api/contracts"],
   });
 
   function onSubmit(data: ModellingFormValues) {
@@ -74,13 +101,158 @@ export default function ModellingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
-              name="country"
+              name="regions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter country" {...field} />
-                  </FormControl>
+                  <FormLabel>Regions</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value?.length > 0
+                            ? `${field.value.length} regions selected`
+                            : "Select regions"}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search regions..." />
+                        <CommandEmpty>No region found.</CommandEmpty>
+                        <CommandGroup>
+                          {regions.map((region) => (
+                            <CommandItem
+                              value={region}
+                              key={region}
+                              onSelect={() => {
+                                const current = new Set(field.value);
+                                if (current.has(region)) {
+                                  current.delete(region);
+                                } else {
+                                  current.add(region);
+                                }
+                                field.onChange(Array.from(current));
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value?.includes(region)
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {region}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {field.value?.map((region) => (
+                      <Badge
+                        key={region}
+                        variant="secondary"
+                        className="cursor-pointer"
+                        onClick={() => {
+                          field.onChange(
+                            field.value.filter((r) => r !== region)
+                          );
+                        }}
+                      >
+                        {region} ×
+                      </Badge>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="selectedContracts"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contracts (Optional)</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value?.length && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value?.length
+                            ? `${field.value.length} contracts selected`
+                            : "Select contracts"}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search contracts..." />
+                        <CommandEmpty>No contract found.</CommandEmpty>
+                        <CommandGroup>
+                          {contracts?.map((contract) => (
+                            <CommandItem
+                              value={contract.name}
+                              key={contract.id}
+                              onSelect={() => {
+                                const current = new Set(field.value || []);
+                                if (current.has(contract.id)) {
+                                  current.delete(contract.id);
+                                } else {
+                                  current.add(contract.id);
+                                }
+                                field.onChange(Array.from(current));
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value?.includes(contract.id)
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {contract.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {field.value?.map((contractId) => {
+                      const contract = contracts?.find((c) => c.id === contractId);
+                      return contract ? (
+                        <Badge
+                          key={contractId}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => {
+                            field.onChange(
+                              field.value?.filter((id) => id !== contractId)
+                            );
+                          }}
+                        >
+                          {contract.name} ×
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -155,10 +327,8 @@ export default function ModellingPage() {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant={"outline"}
-                          className={
-                            "w-full pl-3 text-left font-normal"
-                          }
+                          variant="outline"
+                          className="w-full pl-3 text-left font-normal"
                         >
                           {field.value ? (
                             format(field.value, "PPP")
@@ -196,10 +366,8 @@ export default function ModellingPage() {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant={"outline"}
-                          className={
-                            "w-full pl-3 text-left font-normal"
-                          }
+                          variant="outline"
+                          className="w-full pl-3 text-left font-normal"
                         >
                           {field.value ? (
                             format(field.value, "PPP")
