@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import type { Contract, ExposureFile } from "@shared/schema";
 import { format } from "date-fns";
+import { Link } from "wouter";
 import {
   LineChart,
   Line,
@@ -131,7 +132,11 @@ export default function TreatyReportPage() {
               <dl className="space-y-2">
                 {linkedExposureFiles?.map((file) => (
                   <div key={file.id} className="border-b pb-2 last:border-0">
-                    <dt className="font-medium">File {file.fileId}</dt>
+                    <dt className="font-medium">
+                      <Link href={`/exposure/${file.id}`} className="text-primary hover:underline">
+                        File {file.fileId}
+                      </Link>
+                    </dt>
                     <dd className="space-y-1 mt-1">
                       <div>Total GWP: {file.totalGWP}</div>
                       <div>TSI Amount: {file.tsiAmount}</div>
