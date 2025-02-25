@@ -181,6 +181,51 @@ export default function ContractDetailPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Exposure File Links</h3>
+              {exposureFiles?.map((file) => {
+                const isLinked = links?.some(
+                  (link) => link.exposureFileId === file.id
+                );
+
+                return (
+                  <div
+                    key={file.id}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
+                      id={`file-${file.id}`}
+                      checked={isLinked}
+                      disabled={linkMutation.isPending}
+                      onCheckedChange={(checked) =>
+                        linkMutation.mutate({
+                          exposureFileId: file.id,
+                          checked: checked as boolean,
+                        })
+                      }
+                    />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link href={`/exposure/${file.id}`}>
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto font-medium"
+                          >
+                            Exposure File {file.fileId}
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <ExposureFileTooltip file={file} />
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="h-px bg-border my-6" />
+
             <div>
               <Label htmlFor="grossUpFactor">Gross Up Factor (Auto-calculated)</Label>
               <Input
@@ -231,51 +276,6 @@ export default function ContractDetailPage() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="h-px bg-border my-6" />
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Exposure File Links</h3>
-              {exposureFiles?.map((file) => {
-                const isLinked = links?.some(
-                  (link) => link.exposureFileId === file.id
-                );
-
-                return (
-                  <div
-                    key={file.id}
-                    className="flex items-center space-x-2"
-                  >
-                    <Checkbox
-                      id={`file-${file.id}`}
-                      checked={isLinked}
-                      disabled={linkMutation.isPending}
-                      onCheckedChange={(checked) =>
-                        linkMutation.mutate({
-                          exposureFileId: file.id,
-                          checked: checked as boolean,
-                        })
-                      }
-                    />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link href={`/exposure/${file.id}`}>
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto font-medium"
-                          >
-                            Exposure File {file.fileId}
-                          </Button>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <ExposureFileTooltip file={file} />
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </CardContent>

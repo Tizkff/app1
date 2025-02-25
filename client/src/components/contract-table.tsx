@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Contract, ContractExposureLink, ExposureFile } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function ContractTable() {
   const { data: contracts, isLoading: loadingContracts } = useQuery<Contract[]>({
@@ -47,6 +48,19 @@ export default function ContractTable() {
     );
   }
 
+  const ExposureFileTooltip = ({ file }: { file: ExposureFile }) => {
+    return (
+      <div className="p-3 max-w-xs">
+        <div className="space-y-2 text-sm">
+          <p>Imported by: {file.importedBy}</p>
+          <p>Count: {file.count}</p>
+          <p>Total GWP: {file.totalGWP}</p>
+          <p>TSI Amount: {file.tsiAmount}</p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -69,7 +83,26 @@ export default function ContractTable() {
             <TableRow key={contract.id}>
               <TableCell>{contract.name}</TableCell>
               <TableCell>
-                {linkedFiles.map((file) => file.fileId).join(", ") || "None"}
+                <div className="flex flex-wrap gap-2">
+                  {linkedFiles.map((file) => (
+                    <Tooltip key={file.id}>
+                      <TooltipTrigger asChild>
+                        <Link href={`/exposure/${file.id}`}>
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto font-medium"
+                          >
+                            {file.fileId}
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <ExposureFileTooltip file={file} />
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                  {linkedFiles.length === 0 && "None"}
+                </div>
               </TableCell>
               <TableCell>
                 <Link href={`/contracts/${contract.id}`}>
