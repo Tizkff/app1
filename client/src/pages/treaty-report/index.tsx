@@ -73,24 +73,36 @@ export default function TreatyReportPage() {
       contract.contractNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Sample modeling data - This would come from your API
+  // Sample modeling data with more realistic scenarios and monthly progression
   const modelingData = [
-    { month: "Jan", baseline: 400, optimistic: 450, pessimistic: 350 },
-    { month: "Feb", baseline: 420, optimistic: 480, pessimistic: 360 },
-    { month: "Mar", baseline: 450, optimistic: 520, pessimistic: 380 },
-    { month: "Apr", baseline: 470, optimistic: 550, pessimistic: 390 },
-    { month: "May", baseline: 500, optimistic: 580, pessimistic: 420 },
-    { month: "Jun", baseline: 520, optimistic: 600, pessimistic: 440 },
+    { month: "Jan", baseline: 400, optimistic: 450, pessimistic: 350, actual: 420 },
+    { month: "Feb", baseline: 420, optimistic: 480, pessimistic: 360, actual: 445 },
+    { month: "Mar", baseline: 450, optimistic: 520, pessimistic: 380, actual: 460 },
+    { month: "Apr", baseline: 470, optimistic: 550, pessimistic: 390, actual: 485 },
+    { month: "May", baseline: 500, optimistic: 580, pessimistic: 420, actual: 510 },
+    { month: "Jun", baseline: 520, optimistic: 600, pessimistic: 440, actual: 530 },
+    { month: "Jul", baseline: 540, optimistic: 620, pessimistic: 460, actual: null },
+    { month: "Aug", baseline: 560, optimistic: 640, pessimistic: 480, actual: null },
+    { month: "Sep", baseline: 580, optimistic: 660, pessimistic: 500, actual: null },
+    { month: "Oct", baseline: 600, optimistic: 680, pessimistic: 520, actual: null },
+    { month: "Nov", baseline: 620, optimistic: 700, pessimistic: 540, actual: null },
+    { month: "Dec", baseline: 640, optimistic: 720, pessimistic: 560, actual: null }
   ];
 
-  // Sample comparison modeling data
+  // Sample comparison modeling data with different performance characteristics
   const comparisonModelingData = [
-    { month: "Jan", baseline: 380, optimistic: 420, pessimistic: 320 },
-    { month: "Feb", baseline: 400, optimistic: 450, pessimistic: 340 },
-    { month: "Mar", baseline: 430, optimistic: 490, pessimistic: 360 },
-    { month: "Apr", baseline: 450, optimistic: 520, pessimistic: 370 },
-    { month: "May", baseline: 480, optimistic: 550, pessimistic: 400 },
-    { month: "Jun", baseline: 500, optimistic: 570, pessimistic: 420 },
+    { month: "Jan", baseline: 380, optimistic: 420, pessimistic: 320, actual: 400 },
+    { month: "Feb", baseline: 400, optimistic: 450, pessimistic: 340, actual: 425 },
+    { month: "Mar", baseline: 430, optimistic: 490, pessimistic: 360, actual: 450 },
+    { month: "Apr", baseline: 450, optimistic: 520, pessimistic: 370, actual: 460 },
+    { month: "May", baseline: 480, optimistic: 550, pessimistic: 400, actual: 490 },
+    { month: "Jun", baseline: 500, optimistic: 570, pessimistic: 420, actual: 515 },
+    { month: "Jul", baseline: 520, optimistic: 590, pessimistic: 440, actual: null },
+    { month: "Aug", baseline: 540, optimistic: 610, pessimistic: 460, actual: null },
+    { month: "Sep", baseline: 560, optimistic: 630, pessimistic: 480, actual: null },
+    { month: "Oct", baseline: 580, optimistic: 650, pessimistic: 500, actual: null },
+    { month: "Nov", baseline: 600, optimistic: 670, pessimistic: 520, actual: null },
+    { month: "Dec", baseline: 620, optimistic: 690, pessimistic: 540, actual: null }
   ];
 
   const linkedExposureFiles = exposureFiles?.filter(
@@ -331,6 +343,15 @@ export default function TreatyReportPage() {
                       name="Selected - Pessimistic"
                       strokeWidth={2}
                     />
+                    <Line
+                      data={modelingData}
+                      type="monotone"
+                      dataKey="actual"
+                      stroke="#ff4d4f"
+                      name="Selected - Actual"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                    />
                     {/* Comparison Treaty Lines (dashed) */}
                     {comparisonContract && (
                       <>
@@ -360,6 +381,16 @@ export default function TreatyReportPage() {
                           name="Comparison - Pessimistic"
                           strokeDasharray="5 5"
                           strokeWidth={2}
+                        />
+                        <Line
+                          data={comparisonModelingData}
+                          type="monotone"
+                          dataKey="actual"
+                          stroke="#ff4d4f"
+                          name="Comparison - Actual"
+                          strokeWidth={2}
+                          strokeDasharray="5 5"
+                          dot={{ r: 4 }}
                         />
                       </>
                     )}
