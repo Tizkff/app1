@@ -43,9 +43,6 @@ import {
 
 export default function ExposureOverviewPage() {
   const { id } = useParams();
-
-  // State declarations at the top
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterField, setFilterField] = useState<string>("all");
   const [filterValue, setFilterValue] = useState("");
@@ -54,17 +51,9 @@ export default function ExposureOverviewPage() {
     queryKey: [`/api/exposure-files/${id}`],
   });
 
-  // Early return for loading and error states
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!file) {
-    return <div>Exposure file not found</div>;
-  }
-
-  // Memoize parsed data to avoid re-parsing on every render
   const parsedData = useMemo(() => {
+    if (!file) return null;
+
     try {
       return {
         countryData: JSON.parse(file.exposureByCountry),
@@ -79,16 +68,10 @@ export default function ExposureOverviewPage() {
     }
   }, [file]);
 
-  // If JSON parsing failed, show error
-  if (!parsedData) {
-    return <div>Error parsing exposure file data</div>;
-  }
-
-  const { countryData, industryData, currencyData, topCompanies, detailedData } = parsedData;
-
-  // Memoize filtered data
   const filteredDetailedData = useMemo(() => {
-    return detailedData.filter(item => {
+    if (!parsedData) return [];
+
+    return parsedData.detailedData.filter(item => {
       const searchMatch = searchTerm.toLowerCase() === "" || 
         Object.values(item).some(val => 
           String(val).toLowerCase().includes(searchTerm.toLowerCase())
@@ -101,7 +84,7 @@ export default function ExposureOverviewPage() {
       const itemValue = String(item[filterField as keyof DetailedExposureData]);
       return itemValue.toLowerCase().includes(filterValue.toLowerCase());
     });
-  }, [detailedData, searchTerm, filterField, filterValue]);
+  }, [parsedData, searchTerm, filterField, filterValue]);
 
   const formatChartData = (data: Record<string, number>) =>
     Object.entries(data).map(([name, value]) => ({ name, value }));
@@ -112,6 +95,12 @@ export default function ExposureOverviewPage() {
       currency: 'USD',
       maximumFractionDigits: 0 
     }).format(value);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!file) return <div>Exposure file not found</div>;
+  if (!parsedData) return <div>Error parsing exposure file data</div>;
+
+  const { countryData, industryData, currencyData, topCompanies } = parsedData;
 
   return (
     <div className="space-y-6">
