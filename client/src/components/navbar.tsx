@@ -8,11 +8,9 @@ export default function Navbar() {
     <nav className="border-b">
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col gap-4">
-          <Link href="/">
-            <a className="text-2xl font-bold text-primary">
-              Exposure Link Dashboard
-            </a>
-          </Link>
+          <div className="text-2xl font-bold text-primary">
+            <Link href="/">Exposure Link Dashboard</Link>
+          </div>
 
           <Tabs value={location === "/modelling" ? "modelling" : "contracts"} onValueChange={(value) => {
             navigate(value === "modelling" ? "/modelling" : "/");

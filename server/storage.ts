@@ -11,6 +11,7 @@ export interface IStorage {
   getContracts(): Promise<Contract[]>;
   getContract(id: number): Promise<Contract | undefined>;
   getExposureFiles(): Promise<ExposureFile[]>;
+  getExposureFile(id: number): Promise<ExposureFile | undefined>;
   getContractLinks(contractId: number): Promise<ContractExposureLink[]>;
   createContractLink(link: InsertContractExposureLink): Promise<ContractExposureLink>;
   deleteContractLink(contractId: number, exposureFileId: number): Promise<void>;
@@ -114,6 +115,10 @@ export class MemStorage implements IStorage {
 
   async getExposureFiles(): Promise<ExposureFile[]> {
     return Array.from(this.exposureFiles.values());
+  }
+
+  async getExposureFile(id: number): Promise<ExposureFile | undefined> {
+    return this.exposureFiles.get(id);
   }
 
   async getContractLinks(contractId: number): Promise<ContractExposureLink[]> {

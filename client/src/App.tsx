@@ -7,6 +7,7 @@ import ContractsPage from "@/pages/contracts";
 import ContractDetailPage from "@/pages/contracts/[id]";
 import ModellingPage from "@/pages/modelling";
 import Navbar from "@/components/navbar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function Router() {
   return (
@@ -27,8 +28,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <TooltipProvider>
+        <Router />
+        <Toaster />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
